@@ -4,8 +4,8 @@ import (
   "net/http"
   "net/url"
   "io/ioutil"
+  "encoding/json"
   "time"
-  "log"
 )
 
 const PostUrl string = "https://www.google.com/recaptcha/api/siteverify"
@@ -13,6 +13,12 @@ const PostUrl string = "https://www.google.com/recaptcha/api/siteverify"
 type Recaptcha struct {
   secret string
   timeout int
+  errors []string
+}
+
+type verifyResponse struct {
+  Success bool
+  ErrorCodes []string `json:"error-codes"`
 }
 
 func Timeout(timeout int) func(*Recaptcha) {
@@ -32,6 +38,7 @@ func New(secret string, options ...func(*Recaptcha)) *Recaptcha {
 }
 
 func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, error) {
+  recaptcha.errors = nil
   client := http.Client{Timeout: 30 * time.Second}
 
   resp, err := client.PostForm(PostUrl, url.Values{"secret": {recaptcha.secret}, "response": {response}, "remoteip": {ipAddress}})
@@ -45,7 +52,14 @@ func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, err
     return false, err
   }
 
-  log.Println(string(body))
+  vr := new(verifyResponse)
+  if err := json.Unmarshal(body, &vr); err != nil {
+    return false, err
+  }
 
-  return true, nil
+  return vr.Success, nil
+}
+
+func (recaptcha *Recaptcha) GetErrors() []string {
+  return recaptcha.errors
 }

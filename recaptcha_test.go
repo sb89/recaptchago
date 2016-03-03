@@ -1,6 +1,9 @@
 package recaptcha
 
-import "testing"
+import (
+  "testing"
+  "reflect"
+  )
 
 func TestSecretGetsSet(t *testing.T) {
   secretKey := "My Secret Key"
@@ -27,6 +30,25 @@ func TestTimeoutCanBeSetManually(t *testing.T) {
 
   if r.timeout != timeout {
     t.Error("Expected %d, got %d", timeout, r.timeout)
+  }
+}
+
+func TestGetErrorsReturnsNilWhenNoErrors(t *testing.T) {
+  r := New("My Secret Key")
+
+  if r.GetErrors() != nil {
+    t.Error("Expected nil, got ", r.GetErrors())
+  }
+}
+
+func TestGetErrorsReturnsErrors(t *testing.T) {
+  errors := []string{"Test1", "Test2"}
+
+  r := New("My Secret Key")
+  r.errors = errors
+
+  if !reflect.DeepEqual(errors, r.GetErrors()) {
+    t.Error("Expected ", errors, " got ", r.GetErrors())
   }
 }
 
