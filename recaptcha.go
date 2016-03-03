@@ -8,7 +8,7 @@ import (
   "time"
 )
 
-const PostUrl string = "https://www.google.com/recaptcha/api/siteverify"
+var postUrl string = "https://www.google.com/recaptcha/api/siteverify"
 
 type Recaptcha struct {
   secret string
@@ -41,7 +41,7 @@ func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, err
   recaptcha.errors = nil
   client := http.Client{Timeout: 30 * time.Second}
 
-  resp, err := client.PostForm(PostUrl, url.Values{"secret": {recaptcha.secret}, "response": {response}, "remoteip": {ipAddress}})
+  resp, err := client.PostForm(postUrl, url.Values{"secret": {recaptcha.secret}, "response": {response}, "remoteip": {ipAddress}})
   if err != nil {
     return false, err
   }
@@ -56,6 +56,8 @@ func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, err
   if err := json.Unmarshal(body, &vr); err != nil {
     return false, err
   }
+
+  recaptcha.errors = vr.ErrorCodes
 
   return vr.Success, nil
 }

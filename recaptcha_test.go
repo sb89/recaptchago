@@ -3,6 +3,9 @@ package recaptcha
 import (
   "testing"
   "reflect"
+  "net/http/httptest"
+  "net/http"
+  "encoding/json"
   )
 
 func TestSecretGetsSet(t *testing.T) {
@@ -16,7 +19,7 @@ func TestSecretGetsSet(t *testing.T) {
 }
 
 func TestDefaultTimeoutSetTo30(t *testing.T) {
-  r := New("My Secret Key")
+  r := New("")
 
   if r.timeout != 30 {
     t.Error("Expected 30, got %d", r.timeout)
@@ -26,7 +29,7 @@ func TestDefaultTimeoutSetTo30(t *testing.T) {
 func TestTimeoutCanBeSetManually(t *testing.T) {
   timeout := 80
 
-  r := New("My Secret Key", Timeout(timeout))
+  r := New("", Timeout(timeout))
 
   if r.timeout != timeout {
     t.Error("Expected %d, got %d", timeout, r.timeout)
@@ -34,26 +37,45 @@ func TestTimeoutCanBeSetManually(t *testing.T) {
 }
 
 func TestGetErrorsReturnsNilWhenNoErrors(t *testing.T) {
-  r := New("My Secret Key")
+  r := New("")
 
   if r.GetErrors() != nil {
     t.Error("Expected nil, got ", r.GetErrors())
   }
 }
 
-func TestGetErrorsReturnsErrors(t *testing.T) {
-  errors := []string{"Test1", "Test2"}
+func TestVerifySetsSuccess(t *testing.T) {
+  server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/javascript")
+    json.NewEncoder(w).Encode(verifyResponse{
+      Success:true,
+    })
+  }))
+  defer server.Close()
+  postUrl = server.URL
 
-  r := New("My Secret Key")
-  r.errors = errors
-
-  if !reflect.DeepEqual(errors, r.GetErrors()) {
-    t.Error("Expected ", errors, " got ", r.GetErrors())
+  r := New("")
+  if success, _ := r.Verify("", ""); success != true {
+    t.Error("Expected true, got false")
   }
 }
 
-func TestExample(t *testing.T) {
-  r := New("My Secret Key")
+func TestVerifySetsErrorCodes(t *testing.T) {
+  errorCodes := []string{"Error1", "Error2"}
+  server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/javascript")
+    json.NewEncoder(w).Encode(verifyResponse{
+      Success: false,
+      ErrorCodes: errorCodes,
+    })
+  }))
+  defer server.Close()
+  postUrl = server.URL
 
-  t.Log(r.Verify("test", "test"))
+  r := New("")
+  r.Verify("", "")
+
+  if !reflect.DeepEqual(r.GetErrors(), errorCodes) {
+    t.Error("Expected ", errorCodes, " got ", r.GetErrors())
+  }
 }
