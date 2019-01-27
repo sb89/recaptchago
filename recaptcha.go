@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 var postUrl = "https://www.google.com/recaptcha/api/siteverify"
@@ -47,11 +46,10 @@ func New(secret string, options ...func(*Recaptcha)) *Recaptcha {
 
 // Verify the recaptcha response, will return true or false. Any errors received will be
 // stored in recaptcha struct.
-func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, error) {
-	recaptcha.errors = nil
-	client := http.Client{Timeout: 30 * time.Second}
+func (r *Recaptcha) Verify(ipAddress string, response string) (bool, error) {
+	r.errors = nil
 
-	resp, err := client.PostForm(postUrl, url.Values{"secret": {recaptcha.secret}, "response": {response}, "remoteip": {ipAddress}})
+	resp, err := r.httpClient.PostForm(postUrl, url.Values{"secret": {r.secret}, "response": {response}, "remoteip": {ipAddress}})
 	if err != nil {
 		return false, err
 	}
@@ -67,7 +65,7 @@ func (recaptcha *Recaptcha) Verify(ipAddress string, response string) (bool, err
 		return false, err
 	}
 
-	recaptcha.errors = vr.ErrorCodes
+	r.errors = vr.ErrorCodes
 
 	return vr.Success, nil
 }
