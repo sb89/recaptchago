@@ -14,7 +14,7 @@ func TestSecretGetsSet(t *testing.T) {
 	r := New(secretKey)
 
 	if r.secret != secretKey {
-		t.Error("Expected %s, got %s", secretKey, r.secret)
+		t.Errorf("Expected %s, got %s", secretKey, r.secret)
 	}
 }
 
@@ -22,7 +22,7 @@ func TestDefaultTimeoutSetTo30(t *testing.T) {
 	r := New("")
 
 	if r.timeout != 30 {
-		t.Error("Expected 30, got %d", r.timeout)
+		t.Errorf("Expected 30, got %d", r.timeout)
 	}
 }
 
@@ -32,7 +32,7 @@ func TestTimeoutCanBeSetManually(t *testing.T) {
 	r := New("", Timeout(timeout))
 
 	if r.timeout != timeout {
-		t.Error("Expected %d, got %d", timeout, r.timeout)
+		t.Errorf("Expected %d, got %d", timeout, r.timeout)
 	}
 }
 
