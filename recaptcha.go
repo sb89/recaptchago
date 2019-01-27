@@ -13,9 +13,9 @@ var postUrl = "https://www.google.com/recaptcha/api/siteverify"
 // Recaptcha struct stores the recaptcha configuration as well as the errors received
 // from the Verify function.
 type Recaptcha struct {
-	secret  string
-	timeout int
-	errors  []string
+	httpClient *http.Client
+	secret     string
+	errors     []string
 }
 
 type verifyResponse struct {
@@ -23,20 +23,23 @@ type verifyResponse struct {
 	ErrorCodes []string `json:"error-codes"`
 }
 
-// Timeout sets the timeout (in seconds) to use when verifying the recaptcha.
-func Timeout(timeout int) func(*Recaptcha) {
+func HTTPClient(c *http.Client) func(*Recaptcha) {
 	return func(r *Recaptcha) {
-		r.timeout = timeout
+		r.httpClient = c
 	}
 }
 
 // New returns a new Recaptcha struct using specified secret and any additional options.
 // Default timeout is 30 seconds.
 func New(secret string, options ...func(*Recaptcha)) *Recaptcha {
-	r := &Recaptcha{secret: secret, timeout: 30}
+	r := &Recaptcha{secret: secret}
 
 	for _, option := range options {
 		option(r)
+	}
+
+	if r.httpClient == nil {
+		r.httpClient = http.DefaultClient
 	}
 
 	return r

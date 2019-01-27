@@ -18,21 +18,11 @@ func TestSecretGetsSet(t *testing.T) {
 	}
 }
 
-func TestDefaultTimeoutSetTo30(t *testing.T) {
+func TestDefaultHTTPClientIsUsedIfNotSet(t *testing.T) {
 	r := New("")
 
-	if r.timeout != 30 {
-		t.Errorf("Expected 30, got %d", r.timeout)
-	}
-}
-
-func TestTimeoutCanBeSetManually(t *testing.T) {
-	timeout := 80
-
-	r := New("", Timeout(timeout))
-
-	if r.timeout != timeout {
-		t.Errorf("Expected %d, got %d", timeout, r.timeout)
+	if r.httpClient != http.DefaultClient {
+		t.Error("Expected httpClient to be default but was not")
 	}
 }
 
